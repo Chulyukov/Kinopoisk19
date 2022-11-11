@@ -1,10 +1,10 @@
-import steps.KinopoikSteps;
+import steps.KinopoiskSteps;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 public class Run {
-    KinopoikSteps methodAnswer = new KinopoikSteps();
+    KinopoiskSteps methodAnswer = new KinopoiskSteps();
     @Test
     public void run() throws InterruptedException, IOException {
         methodAnswer.openApp();
