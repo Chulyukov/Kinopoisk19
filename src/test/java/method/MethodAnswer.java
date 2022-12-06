@@ -1,9 +1,9 @@
-package steps;
+package method;
 
 import com.codeborne.selenide.Condition;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import pages.KinopoiskApp;
+import page.KinopoiskApp;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,12 +11,25 @@ import java.util.Map;
 
 import static com.codeborne.selenide.Selenide.*;
 
-public class KinopoiskSteps {
+public class MethodAnswer {
 
     private final KinopoiskApp kinopoiskApp = new KinopoiskApp();
 
     public void openApp() {
         open("https://www.kinopoisk.ru/special/birthday19/");
+        while (!kinopoiskApp.progressTitle.isDisplayed()) {
+            sleep(100);
+        }
+    }
+
+    public void start() {
+        kinopoiskApp.game.shouldBe(Condition.visible).click();
+        kinopoiskApp.startGame.shouldBe(Condition.visible).click();
+    }
+
+    public void startNewEpisode(){
+        kinopoiskApp.newEpisode.shouldBe(Condition.visible).click();
+        kinopoiskApp.startGame.shouldBe(Condition.visible).click();
     }
 
     public void waitNewImage(String image) {
@@ -31,10 +44,10 @@ public class KinopoiskSteps {
         }
     }
 
-    public void waitNewText(String text) {
+    public void waitNewQuotes(String quotes) {
         int time = 0;
         while (time <= 30) {
-            if (text.equals(kinopoiskApp.gameText.getText())) {
+            if (quotes.equals(kinopoiskApp.quotes.getText())) {
                 sleep(100);
                 time++;
             } else {
@@ -57,13 +70,11 @@ public class KinopoiskSteps {
         return true;
     }
 
-    public void startGame() throws IOException {
-        kinopoiskApp.game.shouldBe(Condition.visible).click();
-        kinopoiskApp.startGame.shouldBe(Condition.visible).click();
+    public void startImageEpisode(String urlJson) throws IOException {
         String image, answer;
         ObjectMapper mapper = new ObjectMapper();
         Map<String, String> ans = mapper.readValue(
-                new File("src/test/resources/answers.json"),
+                new File(urlJson),
                 new TypeReference<Map<String, String>>() {
                 }
         );
@@ -73,13 +84,13 @@ public class KinopoiskSteps {
             image = kinopoiskApp.image.getAttribute("src");
             answer = kinopoiskApp.firstAnswerText.getText();
             if (ans.containsKey(kinopoiskApp.image.getAttribute("src"))) {
-                kinopoiskApp.firstAnswerButt(ans.get(kinopoiskApp.image.getAttribute("src"))).click();
+                kinopoiskApp.findAnswerButton(ans.get(kinopoiskApp.image.getAttribute("src"))).click();
                 waitNewImage(image);
             } else {
                 kinopoiskApp.firstAnswerButt.shouldBe(Condition.visible).click();
                 if (checkThatModalNotFound()) {
                     ans.put(image, answer);
-                    mapper.writeValue(new File("src/test/resources/answers.json"), ans);
+                    mapper.writeValue(new File(urlJson), ans);
                     waitNewImage(image);
                 } else {
                     switchTo().activeElement();
@@ -88,7 +99,7 @@ public class KinopoiskSteps {
                     int secondIndex = text.lastIndexOf('»');
                     trueAnswer = kinopoiskApp.answer.shouldBe(Condition.visible).getText().substring(firstIndex + 1, secondIndex);
                     ans.put(image, trueAnswer);
-                    mapper.writeValue(new File("src/test/resources/answers.json"), ans);
+                    mapper.writeValue(new File(urlJson), ans);
                     if (kinopoiskApp.nextButt.exists()) {
                         kinopoiskApp.nextButt.click();
                         waitNewImage(image);
@@ -101,44 +112,42 @@ public class KinopoiskSteps {
         }
     }
 
-    public void startGame2() throws IOException {
-        kinopoiskApp.game2.shouldBe(Condition.visible).click();
-        kinopoiskApp.startGame.shouldBe(Condition.visible).click();
-        String gameText, answer;
+    public void startTextEpisode(String urlJson) throws IOException {
+        String quotes, answer;
         ObjectMapper mapper = new ObjectMapper();
         Map<String, String> ans = mapper.readValue(
-                new File("src/test/resources/answers2.json"),
+                new File(urlJson),
                 new TypeReference<Map<String, String>>() {
                 }
         );
         while (true) {
             String text = "";
             String trueAnswer = "";
-            gameText = kinopoiskApp.gameText.getText();
+            quotes = kinopoiskApp.quotes.getText();
             answer = kinopoiskApp.firstAnswerText.getText();
-            if (ans.containsKey(kinopoiskApp.gameText.getText())) {
-                kinopoiskApp.firstAnswerButt(ans.get(kinopoiskApp.gameText.getText())).click();
-                waitNewText(gameText);
+            if (ans.containsKey(quotes)) {
+                kinopoiskApp.findAnswerButton(ans.get(quotes)).click();
+                waitNewQuotes(quotes);
             } else {
                 kinopoiskApp.firstAnswerButt.shouldBe(Condition.visible).click();
                 if (checkThatModalNotFound()) {
-                    ans.put(gameText, answer);
-                    mapper.writeValue(new File("src/test/resources/answers2.json"), ans);
-                    waitNewText(gameText);
+                    ans.put(quotes, answer);
+                    mapper.writeValue(new File(urlJson), ans);
+                    waitNewQuotes(quotes);
                 } else {
                     switchTo().activeElement();
                     text = kinopoiskApp.answer.shouldBe(Condition.visible).getText();
                     int firstIndex = text.indexOf('«');
                     int secondIndex = text.lastIndexOf('»');
                     trueAnswer = kinopoiskApp.answer.shouldBe(Condition.visible).getText().substring(firstIndex + 1, secondIndex);
-                    ans.put(gameText, trueAnswer);
-                    mapper.writeValue(new File("src/test/resources/answers.json"), ans);
+                    ans.put(quotes, trueAnswer);
+                    mapper.writeValue(new File(urlJson), ans);
                     if (kinopoiskApp.nextButt.exists()) {
                         kinopoiskApp.nextButt.click();
-                        waitNewText(gameText);
+                        waitNewQuotes(quotes);
                     } else {
                         kinopoiskApp.restart.click();
-                        waitNewText(gameText);
+                        waitNewQuotes(quotes);
                     }
                 }
             }
